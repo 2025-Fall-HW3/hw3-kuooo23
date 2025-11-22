@@ -70,7 +70,28 @@ class MyPortfolio:
         """
         TODO: Complete Task 4 Below
         """
-        
+        assets_ex_spy = [col for col in self.price.columns if col != self.exclude]
+
+        for date in self.price.index[60:]:   
+            window = self.returns.loc[:date].tail(60)    
+            price_today = self.price.loc[date]
+
+            valid = []
+            for a in assets_ex_spy:
+                if price_today[a] > self.price[a][:date].rolling(120).mean()[-1]:
+                    valid.append(a)
+
+            if not valid:
+                self.portfolio_weights.loc[date, assets_ex_spy] = 0
+                self.portfolio_weights.loc[date, self.exclude] = 1
+                continue
+
+            vol = window[valid].std()
+            weights = (1 / vol) / (1 / vol).sum()   
+
+            self.portfolio_weights.loc[date, valid] = weights
+            self.portfolio_weights.loc[date, assets_ex_spy] = self.portfolio_weights.loc[date, assets_ex_spy].fillna(0)
+            self.portfolio_weights.loc[date, self.exclude] = 1 - weights.sum()
         
         """
         TODO: Complete Task 4 Above
